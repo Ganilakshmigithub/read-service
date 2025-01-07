@@ -27,14 +27,14 @@ public class ReadService {
         List<SubjectDTO> subjectDTOs = student.getSubjects().stream()
                 .map(subject -> new SubjectDTO(subject.getSubId(), subject.getName(), subject.getMarks()))
                 .collect(Collectors.toList());
-        return new StudentDTO(student.getName(), student.getAge(), student.getGender(),
+        return new StudentDTO(student.getId(),student.getName(), student.getAge(), student.getGender(),
                 student.getDob(), student.getCourse(), student.getCourseStartYear(), student.getCourseEndYear(), subjectDTOs);
     }
 
     //get all students by name
     public List<StudentDTO> getStudentByName(String name) {
         List<Students> students = studentRepo.findByName(name);
-        return students.stream().map(this::convertToDTO).collect(Collectors.toList());
+       return students.stream().map(student -> convertToDTO(student)).collect(Collectors.toList());
     }
     // Get students by age
     public List<StudentDTO> getStudentByAge(int age) {
@@ -47,11 +47,6 @@ public class ReadService {
         Students s=studentRepo.findById(id).orElseThrow();
         return convertToDTO(s);
 
-    }
-    // Get students by gender
-    public List<StudentDTO> getStudentByGender(String gender) {
-        List<Students> students = studentRepo.findByGender(gender);
-        return students.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
     // Get all students with pagination
     public Page<StudentDTO> getAllStudents(int page, int size) {

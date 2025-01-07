@@ -1,10 +1,13 @@
 package com.spring.read_service.controllers;
 
+import com.spring.read_service.dtos.CustomPageResponse;
 import com.spring.read_service.dtos.StudentDTO;
 import com.spring.read_service.dtos.SubjectDTO;
 import com.spring.read_service.services.ReadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,15 +28,18 @@ public class ReadController {
     public List<StudentDTO> getStudentByAge(@PathVariable int age) {
         return readService.getStudentByAge(age);
     }
-    // Get students by gender
-    @GetMapping("/gender/{gender}")
-    public List<StudentDTO> getStudentByGender(@PathVariable String gender) {
-        return readService.getStudentByGender(gender);
-    }
+
     // Get all students with pagination
     @GetMapping("/all")
-    public Page<StudentDTO> getAllStudents(@RequestParam int page, @RequestParam int size) {
-        return readService.getAllStudents(page, size);
+    public ResponseEntity<CustomPageResponse<StudentDTO>> getAllStudents(@RequestParam int page, @RequestParam int size) {
+        Page<StudentDTO> studentPage = readService.getAllStudents(page, size);
+        CustomPageResponse<StudentDTO> response = new CustomPageResponse<>(
+                studentPage.getContent(),
+                studentPage.getTotalPages(),
+                studentPage.getSize(),
+                studentPage.getTotalElements()
+        );
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     //find student by id
