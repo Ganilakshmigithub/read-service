@@ -1,5 +1,8 @@
 package com.spring.read_service.services;
+
+import com.spring.read_service.entities.Role;
 import com.spring.read_service.entities.Users;
+import com.spring.read_service.repository.RoleRepo;
 import com.spring.read_service.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -8,47 +11,46 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+
     @Autowired
     private JWTService jwtService;
+
     @Autowired
-    private AuthenticationManager authManager;
+    AuthenticationManager authManager;
+
     @Autowired
-    private UserRepo userRepo;
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
-    /**
-     * Registers a new user by encoding their password and saving them to the repository.
-     */
-    public Users registerUser(Users user) {
-        user.setPassword(encoder.encode(user.getPassword()));
-        // Default role as USER, can be customized further
-        if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            user.setRoles(Arrays.asList("USER"));
-        }
-        return userRepo.save(user);
+    private UserRepo repo;
+
+    @Autowired
+    private RoleRepo roleRepo;
+
+
+    public Users register(String username, String password,List<String> roleName) {
+        Users user = new Users();
+        user.setUsername(username);
+        user.setPassword(new BCryptPasswordEncoder().encode(password));
+
+        List<Role> role=roleRepo.findByRoleIn(roleName);
+
+        user.setRoles(role);
+
+        return repo.save(user);
+
+
     }
-    /**
-     * Verifies the user credentials and generates a JWT token.
-     */
+
     public String verify(Users user) {
-        Authentication auth = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
-        if (auth.isAuthenticated()) {
-            Users foundUser = userRepo.findByUsername(user.getUsername());
-            if (foundUser != null) {
-                // Generate token including roles
-                return jwtService.generateToken(foundUser.getUsername(), foundUser.getRoles());
-            }
+        Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+        if (authentication.isAuthenticated()) {
+            return jwtService.generateToken(user.getUsername(),user.getRoles().stream().map(Role::getRole).collect(Collectors.toList()));
+        } else {
+            return "fail";
         }
-        return "Authentication Failed";
     }
 }
-
-
-
-
-
-
